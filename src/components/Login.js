@@ -9,15 +9,17 @@ import {
   Alert,
   CircularProgress
 } from '@mui/material';
+import { useAuth } from '../contexts/AuthContext';
 import { authAPI } from '../services/api';
 
-const Login = ({ onLogin }) => {
+const Login = () => {
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const { login } = useAuth();
 
   const handleChange = (e) => {
     setFormData({
@@ -32,32 +34,16 @@ const Login = ({ onLogin }) => {
     setError('');
 
     try {
-      // For now, we'll simulate login since backend auth might not be ready
-      // const response = await authAPI.login(formData.email, formData.password);
+      const response = await authAPI.login(formData.email, formData.password);
 
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Mock login based on email pattern
-      let role = 'PATIENT';
-      if (formData.email.includes('doctor')) role = 'DOCTOR';
-      if (formData.email.includes('admin')) role = 'ADMIN';
-
-      const mockUser = {
-        id: 1,
-        email: formData.email,
-        firstName: 'John',
-        lastName: 'Doe',
-        role: role
-      };
-
-      localStorage.setItem('user', JSON.stringify(mockUser));
-      localStorage.setItem('authToken', 'mock-jwt-token');
-
-      onLogin(mockUser);
-
+      if (response.data) {
+        // Use AuthContext login function
+        login(response.data.user, response.data.token);
+      } else {
+        setError('Invalid response from server');
+      }
     } catch (err) {
-      setError('Login failed. Please check your credentials.');
+      setError(err.response?.data?.message || 'Login failed. Please check your credentials.');
     } finally {
       setLoading(false);
     }
@@ -120,9 +106,9 @@ const Login = ({ onLogin }) => {
 
             <Typography variant="body2" color="text.secondary" align="center">
               Demo Logins:<br />
-              patient@healthsphere.com / any password<br />
-              doctor@healthsphere.com / any password<br />
-              admin@healthsphere.com / any password
+              patient@healthsphere.com / password<br />
+              doctor@healthsphere.com / password<br />
+              admin@healthsphere.com / password
             </Typography>
           </Box>
         </Paper>
